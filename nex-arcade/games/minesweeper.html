@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minesweeper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body {
+      background: #111;
+      color: #0ff;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
+      text-align: center;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 10px auto;
+    }
+    td {
+      width: 12vw;
+      height: 12vw;
+      max-width: 40px;
+      max-height: 40px;
+      background: #333;
+      color: #fff;
+      text-align: center;
+      vertical-align: middle;
+      border: 1px solid #555;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+    button {
+      padding: 10px 20px;
+      background: #0ff;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px 5px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>💣 Minesweeper</h2>
+  <div class="controls">
+    <button onclick="toggleFlagMode()" id="flagBtn">🚩 Flag Mode: OFF</button>
+    <button onclick="createBoard()">Restart</button>
+  </div>
+  <div id="game-container"></div>
+
+  <script>
+    const rows = 8, cols = 8, mines = 10;
+    let board = [], flagMode = false;
+
+    function toggleFlagMode() {
+      flagMode = !flagMode;
+      document.getElementById("flagBtn").textContent = flagMode ? "🚩 Flag Mode: ON" : "🚩 Flag Mode: OFF";
+    }
+
+    function createBoard() {
+      const container = document.getElementById("game-container");
+      container.innerHTML = "";
+      board = [];
+      let mineCount = 0;
+      const table = document.createElement("table");
+
+      for (let r = 0; r < rows; r++) {
+        const row = table.insertRow();
+        board[r] = [];
+        for (let c = 0; c < cols; c++) {
+          const cell = row.insertCell();
+          board[r][c] = { mine: false, revealed: false, flagged: false, el: cell };
+          cell.addEventListener('click', () => handleCell(r, c));
+        }
+      }
+
+      while (mineCount < mines) {
+        const r = Math.floor(Math.random() * rows);
+        const c = Math.floor(Math.random() * cols);
+        if (!board[r][c].mine) {
+          board[r][c].mine = true;
+          mineCount++;
+        }
+      }
+
+      container.appendChild(table);
+    }
+
+    function handleCell(r, c) {
+      const cell = board[r][c];
+      if (cell.revealed) return;
+
+      if (flagMode) {
+        cell.flagged = !cell.flagged;
+        cell.el.textContent = cell.flagged ? "🚩" : "";
+        return;
+      }
+
+      if (cell.flagged) return;
+
+      reveal(r, c);
+    }
+
+    function reveal(r, c) {
+      const cell = board[r][c];
+      if (cell.revealed || cell.flagged) return;
+      cell.revealed = true;
+      cell.el.style.background = "#0ff";
+
+      if (cell.mine) {
+        cell.el.textContent = "💥";
+        setTimeout(() => alert("Game Over!"), 100);
+        return;
+      }
+
+      let count = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc].mine) {
+            count++;
+          }
+        }
+      }
+
+      cell.el.textContent = count || "";
+
+      if (count === 0) {
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) reveal(nr, nc);
+          }
+        }
+      }
+    }
+
+    window.onload = () => {
+      alert("💣 Minesweeper Rules:\n\n- Tap cells to reveal them.\n- 🚩 Toggle flag mode to mark suspected mines.\n- Avoid the bombs.\n- Clear all safe cells to win!\n\nTouch-friendly & mobile-ready!");
+      createBoard();
+    }
+  </script>
+</body>
+</html>

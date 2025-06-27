@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 1rem;
+      text-align: center;
+    }
+    canvas {
+      background: #111;
+      border: 2px solid #0f0;
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background: #0f0;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 60px 60px 60px;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .controls button {
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .invisible {
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <h2>🐍 Snake</h2>
+  <canvas id="game" width="400" height="400"></canvas>
+  <button onclick="startGame()">Restart</button>
+
+  <!-- Mobile D-pad -->
+  <div class="controls">
+    <div class="invisible"></div>
+    <button onclick="setDir(0,-1)">⬆️</button>
+    <div class="invisible"></div>
+    <button onclick="setDir(-1,0)">⬅️</button>
+    <div class="invisible"></div>
+    <button onclick="setDir(1,0)">➡️</button>
+    <div class="invisible"></div>
+    <button onclick="setDir(0,1)">⬇️</button>
+    <div class="invisible"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake, direction, food, gameLoop;
+
+    function draw() {
+      ctx.fillStyle = "#111";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw snake
+      ctx.fillStyle = "#0f0";
+      snake.forEach(part => {
+        ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
+      });
+
+      // Draw food
+      ctx.fillStyle = "#f00";
+      ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+    }
+
+    function update() {
+      const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+
+      if (
+        head.x < 0 || head.x >= tileCount ||
+        head.y < 0 || head.y >= tileCount ||
+        snake.some(part => part.x === head.x && part.y === head.y)
+      ) {
+        clearInterval(gameLoop);
+        alert("Game Over!");
+        return;
+      }
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        food = spawnFood();
+      } else {
+        snake.pop();
+      }
+    }
+
+    function spawnFood() {
+      return {
+        x: Math.floor(Math.random() * tileCount),
+        y: Math.floor(Math.random() * tileCount)
+      };
+    }
+
+    function gameTick() {
+      update();
+      draw();
+    }
+
+    function startGame() {
+      snake = [{ x: 10, y: 10 }];
+      direction = null;
+      food = spawnFood();
+      clearInterval(gameLoop);
+      gameLoop = setInterval(() => {
+        if (direction) {
+          gameTick();
+        } else {
+          draw();
+        }
+      }, 150);
+    }
+
+    // Arrow key support
+    document.addEventListener("keydown", e => {
+      switch (e.key) {
+        case "ArrowUp": if (!direction || direction.y === 0) direction = { x: 0, y: -1 }; break;
+        case "ArrowDown": if (!direction || direction.y === 0) direction = { x: 0, y: 1 }; break;
+        case "ArrowLeft": if (!direction || direction.x === 0) direction = { x: -1, y: 0 }; break;
+        case "ArrowRight": if (!direction || direction.x === 0) direction = { x: 1, y: 0 }; break;
+      }
+    });
+
+    // Touch button support
+    function setDir(x, y) {
+      if (!direction || (direction.x !== x && direction.y !== y)) {
+        direction = { x, y };
+      }
+    }
+
+    // Show rules on first load
+    window.onload = () => {
+      alert("🐍 Snake Rules:\n\n▶️ Use arrow keys (or buttons on mobile) to move.\n🍎 Eat red food to grow.\n💀 Don't hit walls or yourself.\n\nGet the highest score you can!");
+      startGame();
+    };
+  </script>
+</body>
+</html>
